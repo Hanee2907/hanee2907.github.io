@@ -921,6 +921,54 @@ mark .word.is-lit {
   animation-delay: 0.5s;
 }
 
+.mini-globe {
+  background: radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--m) 30%, transparent), #050816 70%);
+}
+
+.mini-globe .earth {
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.35), transparent 40%),
+    radial-gradient(circle at 62% 58%, #3f8f5a 0 14%, transparent 15%),
+    radial-gradient(circle at 30% 64%, #3f8f5a 0 10%, transparent 11%),
+    #1b4f9c;
+  box-shadow: 0 0 26px var(--m);
+}
+
+.mini-globe .orbit {
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 44px;
+  margin: -22px 0 0 -60px;
+  border: 1.5px dashed color-mix(in srgb, var(--m) 70%, transparent);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.mini-globe .orbit b {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px;
+  border-radius: 50%;
+  background: var(--m);
+  box-shadow: 0 0 12px var(--m);
+  offset-path: ellipse(60px 22px at 50% 50%);
+  animation: fly 4s linear infinite;
+}
+
+@keyframes fly {
+  to { offset-distance: 100%; }
+}
+
 @keyframes stick {
   0% { transform: translateY(-30px) rotate(var(--r)) scale(1.2); opacity: 0; }
   20%, 85% { transform: rotate(var(--r)); opacity: 1; }
