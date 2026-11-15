@@ -554,7 +554,109 @@ const drawGlobe: Draw = (g, w, h, t, c) => {
   });
 };
 
+// ---------- Landed: a job board where a card glides from Applied to Replied ----------
+
+const drawBoard: Draw = (g, w, h, t, c) => {
+  const pad = w * 0.07;
+  const gap = w * 0.025;
+  const top = h * 0.2;
+  const colW = (w - pad * 2 - gap * 3) / 4;
+  const colH = h * 0.68;
+  const cardH = Math.min(colH * 0.17, 46);
+  const cardGap = cardH * 0.28;
+  const r = Math.min(10, colW * 0.08);
+  const counts = [4, 2, 2, 1];
+
+  // a warm glow behind the board
+  const glow = g.createRadialGradient(w * 0.7, h * 0.15, 0, w * 0.7, h * 0.15, w * 0.6);
+  glow.addColorStop(0, c.a + '40');
+  glow.addColorStop(1, 'transparent');
+  g.fillStyle = glow;
+  g.fillRect(0, 0, w, h);
+
+  const cardAt = (col: number, i: number) => ({
+    x: pad + col * (colW + gap) + colW * 0.08,
+    y: top + colH * 0.12 + i * (cardH + cardGap),
+  });
+
+  const drawCard = (x: number, y: number, tone: string, dark = false) => {
+    roundRect(g, x, y, colW * 0.84, cardH, r * 0.8);
+    g.fillStyle = dark ? '#3a2a20' : '#ffffff';
+    g.fill();
+    roundRect(g, x + cardH * 0.18, y + cardH * 0.2, cardH * 0.36, cardH * 0.36, 4);
+    g.fillStyle = tone;
+    g.fill();
+    g.fillStyle = dark ? '#ffcfb8' : '#cfc4b0';
+    g.fillRect(x + cardH * 0.66, y + cardH * 0.28, colW * 0.4, cardH * 0.12);
+    g.fillRect(x + cardH * 0.18, y + cardH * 0.7, colW * 0.3, cardH * 0.1);
+  };
+
+  // the four columns
+  for (let col = 0; col < 4; col++) {
+    const x = pad + col * (colW + gap);
+    roundRect(g, x, top, colW, colH, r);
+    g.fillStyle = 'rgba(236,228,213,0.13)';
+    g.fill();
+    g.fillStyle = 'rgba(246,241,232,0.55)';
+    g.fillRect(x + colW * 0.1, top + colH * 0.05, colW * 0.36, 3);
+  }
+
+  // one card travels: lifts out of Applied, tilts, lands in Replied, then the loop starts again
+  const cycle = (t * 0.32) % 1;
+  const move = cycle < 0.25 ? 0 : cycle > 0.65 ? 1 : (cycle - 0.25) / 0.4;
+  const ease = move < 0.5 ? 2 * move * move : 1 - Math.pow(-2 * move + 2, 2) / 2;
+  const lift = Math.sin(move * Math.PI);
+
+  const tones = [c.a, '#3b6cff', '#16a37a', c.b, '#9b5cff'];
+  counts.forEach((n, col) => {
+    // Applied keeps its other cards; the travelling one is drawn separately below
+    const shown = col === 0 ? n - 1 : n;
+    for (let i = 0; i < shown; i++) {
+      const p = cardAt(col, col === 0 ? i + 1 : col === 1 ? i + ease : i);
+      drawCard(p.x, p.y, tones[(col * 2 + i) % tones.length], col === 3);
+    }
+  });
+
+  const from = cardAt(0, 0);
+  const to = cardAt(1, 0);
+  const x = lerp(from.x, to.x, ease);
+  const y = lerp(from.y, to.y, ease) - lift * cardH * 0.6;
+  if (move > 0 && move < 1) {
+    g.save();
+    g.translate(x + colW * 0.42, y + cardH / 2);
+    g.rotate(-0.06 * lift);
+    g.shadowColor = 'rgba(0,0,0,0.45)';
+    g.shadowBlur = 18 * lift;
+    g.shadowOffsetY = 8 * lift;
+    drawCard(-colW * 0.42, -cardH / 2, c.a);
+    g.shadowBlur = 0;
+    g.shadowOffsetY = 0;
+    roundRect(g, -colW * 0.42, -cardH / 2, colW * 0.84, cardH, r * 0.8);
+    g.strokeStyle = c.a;
+    g.lineWidth = 2;
+    g.stroke();
+    g.restore();
+  } else if (move >= 1) {
+    drawCard(to.x, to.y, c.a);
+  } else {
+    drawCard(from.x, from.y, c.a);
+  }
+
+  // a little reply-rate chart above the board, bars breathing
+  const bars = 6;
+  const bw = w * 0.022;
+  for (let i = 0; i < bars; i++) {
+    const bx = w - pad - (bars - i) * bw * 1.7;
+    const bh = h * (0.04 + 0.06 * (i / bars)) * (1 + 0.15 * Math.sin(t * 1.5 + i));
+    g.fillStyle = 'rgba(236,228,213,0.45)';
+    g.fillRect(bx, top - h * 0.04 - bh, bw, bh);
+    g.fillStyle = c.a;
+    g.fillRect(bx, top - h * 0.04 - bh * 0.25, bw, bh * 0.25);
+  }
+};
+
 const ARTS: Record<string, Draw> = {
+  board: drawBoard,
   chess: drawChess,
   wave: drawWave,
   orbit: drawOrbit,
